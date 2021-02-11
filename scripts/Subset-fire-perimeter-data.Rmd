@@ -1,0 +1,42 @@
+---
+title: "Subset fire perimeters"
+author: "Anna Talucci"
+date: "2/11/2021"
+output: html_document
+---
+
+# Overview
+
+ Test automated fire perimeter method for Siberia with [Alaska historic fire perimeter data](https://wfdss.usgs.gov/wfdss/wfdss_data_downloads.shtml)
+ 
+ 
+
+```{r}
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(purrr)
+library(readr)
+library(cowplot)
+library(ggcorrplot)
+library(sp)
+library(sf)
+library(rgdal) # geospatial data
+library(raster)
+library(rgeos) # GIS Geometry
+library(foreign) # deals with dbf files
+library(spatialEco)
+```
+
+# Data
+```{r}
+fires = st_read("../data/2000_2009WFDSSHistoricPerimeters/HistoricFirePerimeters_2000_2009.shp", "HistoricFirePerimeters_2000_2009") 
+```
+
+```{r}
+head(fires)
+```
+
+```{r}
+fire2004= ecozone %>% filter(BIOME==11)
+```
