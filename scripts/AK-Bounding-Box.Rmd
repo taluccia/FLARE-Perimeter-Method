@@ -4,6 +4,9 @@ author: "Anna Talucci"
 date: "2/11/2021"
 output: html_document
 ---
+
+# Overview
+script creates bounding box for AK and subsets the 2004 fire data to AK
 # Packages
 
 ```{r include=FALSE}
