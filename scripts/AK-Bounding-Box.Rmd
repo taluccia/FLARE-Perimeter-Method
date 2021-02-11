@@ -1,0 +1,88 @@
+---
+title: "AK Bounding Box"
+author: "Anna Talucci"
+date: "2/11/2021"
+output: html_document
+---
+# Packages
+
+```{r include=FALSE}
+library(sp)
+library(sf)
+library(rgdal) # geospatial data
+library(raster)
+library(rgeos) # GIS Geometry
+library(foreign) # deals with dbf files
+library(dplyr)
+```
+
+# Projections
+```{r}
+wgs_proj =  "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs "
+
+```
+
+
+# Data
+```{r}
+fires04 = readOGR("../data/Fires_2004/USA_Fires_2004.shp", "USA_Fires_2004") 
+```
+
+```{r}
+plot(fires04)
+```
+
+```{r}
+fires04_wgs = spTransform(fires04, CRS( wgs_proj))
+```
+
+```{r}
+
+fires04_wgs
+```
+
+# BBOX
+
+```{r}
+AK_matrix = matrix(c(-140.0, 70.0,
+               -166.0, 70.0,
+               -166.0, 59.0, 
+               -140.0, 59.0), 
+             ncol = 2, byrow = TRUE)
+
+
+AK_coords = Polygon(AK_matrix)
+AK_bbox = SpatialPolygons(list(Polygons(list(AK_coords), ID = "a")), proj4string=CRS("+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs"))
+```
+
+```{r}
+plot(AK_bbox)
+plot(fires04_wgs, add=TRUE)
+```
+
+
+
+## Subset area to BBOX ecozone
+```{r}
+AK_Fires_2004 = fires04_wgs[AK_bbox, ]
+```
+
+```{r}
+plot(AK_Fires_2004)
+```
+
+
+### Sp to sf
+
+```{r}
+AK_Fires_2004_sf = st_as_sf(AK_Fires_2004)
+AK_bbox_sf = st_as_sf(AK_bbox)
+```
+
+### Write to file
+Create a shapefile
+
+```{r eval=FALSE, include=FALSE}
+st_write(AK_Fires_2004_sf, "../outputs/AK_Fires_2004.shp", driver="ESRI Shapefile")
+st_write(AK_bbox_sf, "../outputs/AK_bbox.shp", driver="ESRI Shapefile")
+```
