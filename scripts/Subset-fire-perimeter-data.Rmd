@@ -38,5 +38,22 @@ head(fires)
 ```
 
 ```{r}
-fire2004= ecozone %>% filter(BIOME==11)
+fire2004= fires %>% filter(FIRE_YEAR==2004)
+```
+
+```{r}
+head(fire2004)
+```
+
+
+```{r}
+fire2004
+```
+
+
+
+# Save 2004 fire perimeters
+```{r eval=FALSE, include=FALSE}
+st_write(fire2004, "../outputs/USA_Fires_2004.shp", driver="ESRI Shapefile") 
+
 ```
