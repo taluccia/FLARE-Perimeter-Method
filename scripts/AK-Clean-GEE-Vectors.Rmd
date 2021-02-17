@@ -126,14 +126,29 @@ min(rdnbr_at$area_ha)
 max(rdnbr_at$area_ha)
 ```
 
+```{r}
+summary(dnbr_at)
+summary(rdnbr_at)
+```
 
 
+# Remove polygons leess than 400 ha
+```{r}
+dnbr_ha = filter(dnbr_at, as.numeric(dnbr_at$area_ha) >= 400)
+rdnbr_ha = filter(rdnbr_at, as.numeric(rdnbr_at$area_ha) >= 400)
+
+```
+
+```{r}
+summary(dnbr_ha)
+summary(rdnbr_ha)
+```
 
 # Write to shapefile
 
 ```{r eval=FALSE, include=FALSE}
-st_write(dnbr_at, "../outputs/clean-shapefile/AK_dnbr_fire_2004.shp", driver="ESRI Shapefile") 
-st_write(rdnbr_at, "../outputs/clean-shapefile/AK_rdnbr_fire_2004.shp", driver="ESRI Shapefile")  
+st_write(dnbr_ha, "../outputs/clean-shapefile/AK_dnbr_fire_ha400_2004.shp", driver="ESRI Shapefile") 
+st_write(rdnbr_ha, "../outputs/clean-shapefile/AK_rdnbr_fire_ha400_2004.shp", driver="ESRI Shapefile")  
 ```
 
 
