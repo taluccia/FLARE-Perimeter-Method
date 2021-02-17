@@ -1,0 +1,94 @@
+---
+title: "Overlay GEE vectors with MTBS perimeters"
+author: "Anna Talucci"
+date: "2/16/2021"
+output: html_document
+---
+
+# Overview
+
+For comparing MTB to GEE vectors
+
+Overlay to add attributes to pair fire perimeters (i.e., MTBS with GEE Vector dNBR or RdNBR)
+
+
+# Library
+
+```{r}
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(purrr)
+library(readr)
+library(cowplot)
+library(ggcorrplot)
+library(sp)
+library(sf)
+library(rgdal) # geospatial data
+library(raster)
+library(rgeos) # GIS Geometry
+library(foreign) # deals with dbf files
+library(lubridate)
+```
+https://stackoverflow.com/questions/47784656/batch-load-shapefiles-from-directory-into-r
+
+https://stackoverflow.com/questions/62419562/read-in-a-list-of-shapefiles-and-row-bind-them-in-r-preferably-using-tidy-synta
+# Projections
+
+WGS 84 need for gee
+```{r}
+wgs_proj =  "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs "
+
+```
+
+"+proj=longlat +datum=NAD83 +no_defs"
+```{r}
+nad83 = "+proj=longlat +datum=NAD83 +no_defs"
+```
+
+[Alaska Equal Area Conic](https://spatialreference.org/ref/esri/102006/)
+
++proj=aea +lat_1=55 +lat_2=65 +lat_0=50 +lon_0=-154 +x_0=0 +y_0=0 +ellps=GRS80 +datum=NAD83 +units=m +no_defs
+
+```{r}
+ee_ak = "+proj=aea +lat_1=55 +lat_2=65 +lat_0=50 +lon_0=-154 +x_0=0 +y_0=0 +ellps=GRS80 +datum=NAD83 +units=m +no_defs"
+```
+
+# Data
+## MTBS Fire perimeters
+
+```{r}
+mtbs = st_read("../data/MTBS_Fires_2004/AK_Fires_2004.shp", "AK_Fires_2004")
+```
+## GEE Vectors
+
+```{r}
+dnbr = st_read("../data/clean-shapefile/AK_dnbr_fire_2004.shp", "AK_dnbr_fire_2004")
+rdnbr = st_read("../data/clean-shapefile/AK_rdnbr_fire_2004.shp", "AK_rdnbr_fire_2004")
+```
+
+
+# Reproject
+
+```{r}
+st_crs(mtbs)$proj4string
+```
+
+```{r}
+mtbs_ee = st_transform(mtbs, CRS(ee_ak))
+```
+
+```{r}
+head(mtbs_ee)
+```
+
+```{r}
+min(mtbs$GIS_ACRES)
+max(mtbs$GIS_ACRES)
+```
+
+
+```{r}
+plot(mtbs_ee$geometry, col="red")
+plot(dnbr$geometry, add=TRUE, col="blue")
+```
