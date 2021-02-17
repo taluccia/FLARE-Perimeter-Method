@@ -1,0 +1,139 @@
+---
+title: "AK Clean GEE Vectors"
+author: "Anna Talucci"
+date: "2/16/2021"
+output: html_document
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Overview
+
+What is included in this script:
+
+Read in Alaska 2004 vectors from GEE that were run on RdNBR and dNBR binary imagery. Script below will clean and remove holes and add atttributes.
+
+
+# Packages
+
+```{r include=FALSE}
+library(sp)
+library(sf)
+library(rgdal) # geospatial data
+library(raster)
+library(rgeos) # GIS Geometry
+library(foreign) # deals with dbf files
+library(dplyr)
+library(spatialEco)
+```
+
+
+
+
+# Projections
+
+WGS 84 need for gee
+```{r}
+wgs_proj =  "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs "
+
+```
+
+
+[Alaska Equal Area Conic](https://spatialreference.org/ref/esri/102006/)
+
++proj=aea +lat_1=55 +lat_2=65 +lat_0=50 +lon_0=-154 +x_0=0 +y_0=0 +ellps=GRS80 +datum=NAD83 +units=m +no_defs
+
+```{r}
+ee_ak = "+proj=aea +lat_1=55 +lat_2=65 +lat_0=50 +lon_0=-154 +x_0=0 +y_0=0 +ellps=GRS80 +datum=NAD83 +units=m +no_defs"
+```
+
+
+# Read in shapefile
+
+```{r}
+dnbr = readOGR("../data/gee_fire_perimeters/2004_AK_fires_dnbr.shp", "2004_AK_fires_dnbr")
+rdnbr = readOGR("../data/gee_fire_perimeters/2004_AK_fires_rdnbr.shp", "2004_AK_fires_rdnbr")
+
+```
+
+```{r}
+plot(dnbr)
+```
+
+# Reproject in Equal area
+
+```{r}
+dnbr_ee = spTransform(dnbr, CRS(ee_ak))
+rdnbr_ee = spTransform(rdnbr, CRS(ee_ak))
+```
+
+# Remove holes inside polygons
+```{r}
+dnbr_nh = remove.holes(dnbr_ee)
+rdnbr_nh = remove.holes(rdnbr_ee)
+```
+
+
+# Convert from sp to sf
+```{r}
+dnbr_sf = st_as_sf(dnbr_nh)
+rdnbr_sf = st_as_sf(rdnbr_nh)
+```
+
+# Covert from Multipolygon to Polygon
+
+```{r}
+dnbr_sf = st_cast(dnbr_sf,"POLYGON")
+rdnbr_sf = st_cast(rdnbr_sf,"POLYGON")
+```
+
+
+```{r}
+dim(dnbr_sf)
+head(dnbr_sf)
+```
+
+```{r}
+dim(rdnbr_sf)
+head(rdnbr_sf)
+```
+
+# Create attributes
+- ID based on row number
+- area in meters squared, area_m
+- area in Hectares, area_ha
+- Year of the burn, fire_yr
+
+```{r}
+dnbr_at = dnbr_sf %>% dplyr::mutate(ID_obj = row_number()) %>% dplyr::mutate(area_m = round(st_area(dnbr_sf),1)) %>% dplyr::mutate(area_ha = round(area_m*0.0001, 1)) %>% dplyr::mutate(fire_yr = 2004) %>% dplyr::mutate(index = "dnbr") 
+
+rdnbr_at = rdnbr_sf %>% dplyr::mutate(ID_obj = row_number()) %>% dplyr::mutate(area_m = round(st_area(rdnbr_sf),1)) %>% dplyr::mutate(area_ha = round(area_m*0.0001, 1)) %>% dplyr::mutate(fire_yr = 2004) %>% dplyr::mutate(index = "rdnbr") 
+```
+
+
+```{r}
+head(dnbr_at$area_ha)
+min(dnbr_at$area_ha)
+max(dnbr_at$area_ha)
+```
+
+```{r}
+head(rdnbr_at$area_ha)
+min(rdnbr_at$area_ha)
+max(rdnbr_at$area_ha)
+```
+
+
+
+
+# Write to shapefile
+
+```{r eval=FALSE, include=FALSE}
+st_write(dnbr_at, "../outputs/clean-shapefile/AK_dnbr_fire_2004.shp", driver="ESRI Shapefile") 
+st_write(rdnbr_at, "../outputs/clean-shapefile/AK_rdnbr_fire_2004.shp", driver="ESRI Shapefile")  
+```
+
+
