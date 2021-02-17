@@ -50,7 +50,9 @@ head(fire2004)
 fire2004
 ```
 
-
+```{r}
+st_crs(fire2004)$proj4string
+```
 
 # Save 2004 fire perimeters
 ```{r eval=FALSE, include=FALSE}
