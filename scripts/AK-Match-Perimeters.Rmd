@@ -63,8 +63,8 @@ mtbs = st_read("../data/MTBS_Fires_2004/AK_Fires_2004.shp", "AK_Fires_2004")
 ## GEE Vectors
 
 ```{r}
-dnbr = st_read("../data/clean-shapefile/AK_dnbr_fire_2004.shp", "AK_dnbr_fire_2004")
-rdnbr = st_read("../data/clean-shapefile/AK_rdnbr_fire_2004.shp", "AK_rdnbr_fire_2004")
+dnbr = st_read("../data/clean-shapefile/AK_dnbr_fire_ha400_2004.shp", "AK_dnbr_fire_ha400_2004")
+rdnbr = st_read("../data/clean-shapefile/AK_rdnbr_fire_ha400_2004.shp", "AK_rdnbr_fire_ha400_2004")
 ```
 
 
@@ -79,16 +79,86 @@ mtbs_ee = st_transform(mtbs, CRS(ee_ak))
 ```
 
 ```{r}
+st_crs(mtbs_ee)$proj4string
+```
+
+# Look at attribute data
+```{r}
 head(mtbs_ee)
 ```
 
 ```{r}
-min(mtbs$GIS_ACRES)
-max(mtbs$GIS_ACRES)
+min(mtbs_ee$GIS_ACRES)
+max(mtbs_ee$GIS_ACRES)
 ```
 
+```{r}
+
+mtbs_ee_ha = mtbs_ee %>% dplyr::select(FIRE_YEAR:INCIDENT, MAP_METHOD, SOURCE:geometry) %>% dplyr::mutate(mtbs_area_m = round(st_area(mtbs_ee),1)) %>% dplyr::mutate(mtbs_area_ha = round(mtbs_area_m*0.0001, 1)) %>% dplyr::mutate(fire_yr = 2004) %>% dplyr::mutate(index = "mtbs") 
+```
 
 ```{r}
 plot(mtbs_ee$geometry, col="red")
 plot(dnbr$geometry, add=TRUE, col="blue")
+```
+
+## Polygon sizes
+```{r}
+min(mtbs_ee_ha$mtbs_area_ha)
+max(mtbs_ee_ha$mtbs_area_ha)
+```
+
+```{r}
+min(dnbr$area_ha)
+max(dnbr$area_ha)
+```
+
+
+```{r}
+min(rdnbr$area_ha)
+max(rdnbr$area_ha)
+```
+```{r}
+summary(mtbs_ee_ha)
+summary(dnbr)
+summary(rdnbr)
+```
+# Overlay
+
+Overlay hotspot and  fire perimeter data by year in order to add attributes from hotspots to fire perimeters  that they interect. This will add attributes for:
+- Fire start
+- Fire end
+- Accuracy
+
+## Functions For overlay
+
+```{r}
+head(mtbs_ee_ha)
+```
+
+This function summarizes the mtbs polygon data within the GEE polygon 
+
+```{r}
+sum_mtbs = function(x){
+  x %>% group_by(ID_obj) %>% 
+  summarize(mtbs_sum_ha = sum(area_ha),
+            mtbs_poly_ct = tally()) -> x
+  return(x)
+}
+```
+
+## Process
+sum_2001 = st_intersection(hotspot_2001, fire_2001) %>% sum_pt_poly()
+```{r}
+ol_dnbr = st_intersection(dnbr, mtbs_ee_ha)
+```
+
+```{r}
+ol_dnbr %>% group_by(ID_obj) %>% mutate(count = n()) %>% summarise(mtbs_sum_ha = sum(mtbs_area_ha))
+```
+
+
+
+```{r}
+st_intersection(dnbr, mtbs_ee_ha) %>% sum_mtbs
 ```
