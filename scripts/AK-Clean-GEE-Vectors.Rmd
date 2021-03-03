@@ -132,7 +132,7 @@ summary(rdnbr_at)
 ```
 
 
-# Remove polygons leess than 400 ha
+# Remove polygons less than 400 ha
 ```{r}
 dnbr_ha = filter(dnbr_at, as.numeric(dnbr_at$area_ha) >= 400)
 rdnbr_ha = filter(rdnbr_at, as.numeric(rdnbr_at$area_ha) >= 400)

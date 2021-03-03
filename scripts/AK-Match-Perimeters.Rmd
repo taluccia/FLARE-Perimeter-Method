@@ -120,9 +120,28 @@ max(rdnbr$area_ha)
 ```
 ```{r}
 summary(mtbs_ee_ha)
-summary(dnbr)
-summary(rdnbr)
 ```
+
+```{r}
+summary(dnbr)
+head(dnbr)
+```
+
+```{r}
+dnbr = dnbr %>% rename(dnbr_area_m = area_m, dnbr_area_ha = area_ha, dnbr_fire_yr = fire_yr )
+```
+
+
+```{r}
+summary(rdnbr)
+head(rdnbr)
+```
+
+```{r}
+rdnbr = rdnbr %>% rename(rdnbr_area_m = area_m, rdnbr_area_ha = area_ha, rdnbr_fire_yr = fire_yr )
+```
+
+
 # Overlay
 
 Overlay hotspot and  fire perimeter data by year in order to add attributes from hotspots to fire perimeters  that they interect. This will add attributes for:
@@ -150,15 +169,44 @@ sum_mtbs = function(x){
 ## Process
 sum_2001 = st_intersection(hotspot_2001, fire_2001) %>% sum_pt_poly()
 ```{r}
-ol_dnbr = st_intersection(dnbr, mtbs_ee_ha)
-```
-
-```{r}
-ol_dnbr %>% group_by(ID_obj) %>% mutate(count = n()) %>% summarise(mtbs_sum_ha = sum(mtbs_area_ha))
+dnbr_mtbs = st_intersection(dnbr, mtbs_ee_ha)
+rdnbr_dnbr_mtbs = st_intersection(rdnbr, dnbr_mtbs)
 ```
 
 
+```{r}
+
+head(rdnbr_dnbr_mtbs)
+```
 
 ```{r}
-st_intersection(dnbr, mtbs_ee_ha) %>% sum_mtbs
+st_geometry(rdnbr_dnbr_mtbs) <- NULL
+```
+  mutate(dif_mtbs_dnbr = mtbs_area_ha - dnbr_area_ha) %>%
+  mutate(dif_mtbs_rdnbr = mtbs_area_ha - rdnbr_area_ha)
+  
+```{r}
+as.numeric(rdnbr_dnbr_mtbs$mtbs_area_ha)
+```
+
+```{r}
+df_rdnbr_dnbr_mtbs = rdnbr_dnbr_mtbs %>% 
+  dplyr::select(UNQEFIREID, MAP_METHOD, INCIDENT, mtbs_area_m:index.1, rdnbr_area_m:FIRE_YEAR) %>%
+  mutate(mtbs_area_ha = as.numeric(mtbs_area_ha))
+
+```
+
+```{r}
+head(df_rdnbr_dnbr_mtbs)
+str(df_rdnbr_dnbr_mtbs)
+```
+
+```{r}
+df_rdnbr_dnbr_mtbs %>% dplyr::select(UNQEFIREID:INCIDENT, mtbs_area_ha, rdnbr_area_m, dnbr_area_ha)
+```
+
+
+```{r}
+
+write.csv(df_rdnbr_dnbr_mtbs,  "../outputs/csv/2021-03-01_AK_Perimeters_Compare.csv", row.names=FALSE)
 ```
