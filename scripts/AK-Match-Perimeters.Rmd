@@ -68,6 +68,12 @@ rdnbr = st_read("../data/clean-shapefile/AK_rdnbr_fire_ha400_2004.shp", "AK_rdnb
 ```
 
 
+```{r}
+dnbr_negbuf = st_read("../data/clean-shapefile/AK_dnbr_NegBuf_fires_2004.shp", "AK_dnbr_NegBuf_fires_2004")
+rdnbr_negbuf = st_read("../data/clean-shapefile/AK_rdnbr_NegBuf_fire_2004.shp", "AK_rdnbr_NegBuf_fire_2004")
+```
+
+
 # Reproject
 
 ```{r}
@@ -113,24 +119,165 @@ min(dnbr$area_ha)
 max(dnbr$area_ha)
 ```
 
+```{r}
+min(dnbr_negbuf$area_ha)
+max(dnbr_negbuf$area_ha)
+```
+
+
 
 ```{r}
 min(rdnbr$area_ha)
 max(rdnbr$area_ha)
 ```
+
 ```{r}
-summary(mtbs_ee_ha)
+min(rdnbr_negbuf$area_ha)
+max(rdnbr_negbuf$area_ha)
 ```
 
+# Summarize Datasets
+
+## MTBS
+```{r}
+mtbs_ee_ha_df = mtbs_ee_ha %>% 
+  mutate(mtbs_area_ha = as.numeric(mtbs_area_ha))
+st_geometry(mtbs_ee_ha_df) <- NULL
+```
+
+```{r}
+mtbs_ee_ha_df
+```
+
+```{r}
+( mtbs_sum = mtbs_ee_ha_df %>% summarise(
+n = n(),
+Mean = mean(mtbs_area_ha),
+SD = sd(mtbs_area_ha),
+Median = median(mtbs_area_ha),
+Minimum = min(mtbs_area_ha),
+Maximum = max(mtbs_area_ha),
+Total = sum(mtbs_area_ha))%>%
+  mutate(index="mtbs"))
+```
+
+```{r}
+( mtbs_400_sum = mtbs_ee_ha_df %>% 
+    filter(mtbs_ee_ha_df$mtbs_area_ha >= 400) %>% 
+    summarise(
+n = n(),
+Mean = mean(mtbs_area_ha),
+SD = sd(mtbs_area_ha),
+Median = median(mtbs_area_ha),
+Minimum = min(mtbs_area_ha),
+Maximum = max(mtbs_area_ha),
+Total = sum(mtbs_area_ha))%>%
+  mutate(index="mtbs_400"))
+```
+
+## dNBR
+```{r}
+dnbr_ee_ha_df = dnbr 
+st_geometry(dnbr_ee_ha_df) <- NULL
+```
+
+```{r}
+( dnbr_sum = dnbr_ee_ha_df %>% summarise(
+n = n(),
+Mean = mean(area_ha),
+SD = sd(area_ha),
+Median = median(area_ha),
+Minimum = min(area_ha),
+Maximum = max(area_ha),
+Total = sum(area_ha)) %>%
+  mutate(index="dnbr"))
+```
+
+## dNBR  negative buff
+```{r}
+dnbr_nb_df = dnbr_negbuf
+st_geometry(dnbr_nb_df) <- NULL
+```
+
+```{r}
+( dnbr_nb_sum = dnbr_nb_df %>% summarise(
+n = n(),
+Mean = mean(area_ha),
+SD = sd(area_ha),
+Median = median(area_ha),
+Minimum = min(area_ha),
+Maximum = max(area_ha),
+Total = sum(area_ha)) %>%
+  mutate(index="dnbr_nb"))
+```
+
+## RdNBR
+```{r}
+rdnbr_ee_ha_df = rdnbr 
+st_geometry(rdnbr_ee_ha_df) <- NULL
+```
+
+```{r}
+( rdnbr_sum = rdnbr_ee_ha_df %>% summarise(
+n = n(),
+Mean = mean(area_ha),
+SD = sd(area_ha),
+Median = median(area_ha),
+Minimum = min(area_ha),
+Maximum = max(area_ha),
+Total = sum(area_ha)) %>%
+  mutate(index="rdnbr"))
+```
+
+## dNBR  negative buff
+```{r}
+rdnbr_nb_df = rdnbr_negbuf
+st_geometry(rdnbr_nb_df) <- NULL
+```
+
+```{r}
+( rdnbr_nb_sum = rdnbr_nb_df %>% summarise(
+n = n(),
+Mean = mean(area_ha),
+SD = sd(area_ha),
+Median = median(area_ha),
+Minimum = min(area_ha),
+Maximum = max(area_ha),
+Total = sum(area_ha)) %>%
+  mutate(index="rdnbr_nb"))
+```
+
+## Combine Summaries
+
+```{r}
+sum_df = rbind(mtbs_sum, mtbs_400_sum, dnbr_sum, dnbr_nb_sum, rdnbr_sum, rdnbr_nb_sum)
+
+sum_df
+```
+
+
+```{r eval=FALSE, include=FALSE}
+write.csv(sum_df,  "../outputs/csv/2021-03-04_AK_summary_by_index.csv", row.names=FALSE)
+```
+
+# Rename columns for overlay
 ```{r}
 summary(dnbr)
 head(dnbr)
 ```
 
 ```{r}
-dnbr = dnbr %>% rename(dnbr_area_m = area_m, dnbr_area_ha = area_ha, dnbr_fire_yr = fire_yr )
+dnbr = dnbr %>% rename(dnbr_ID = ID_obj, dnbr_area_m = area_m, dnbr_area_ha = area_ha, dnbr_fire_yr = fire_yr )
 ```
 
+```{r}
+summary(dnbr_negbuf)
+head(dnbr_negbuf)
+```
+
+```{r}
+dnbr_negbuf = dnbr_negbuf %>% rename(dnbr_nb_ID = ID_obj, dnbr_nb_area_m = area_m, dnbr_nb_area_ha = area_ha, dnbr_nb_fire_yr = fire_yr )
+```
 
 ```{r}
 summary(rdnbr)
@@ -138,9 +285,17 @@ head(rdnbr)
 ```
 
 ```{r}
-rdnbr = rdnbr %>% rename(rdnbr_area_m = area_m, rdnbr_area_ha = area_ha, rdnbr_fire_yr = fire_yr )
+rdnbr = rdnbr %>% rename(rdnbr_ID = ID_obj, rdnbr_area_m = area_m, rdnbr_area_ha = area_ha, rdnbr_fire_yr = fire_yr )
 ```
 
+```{r}
+summary(rdnbr_negbuf)
+head(rdnbr_negbuf)
+```
+
+```{r}
+rdnbr_negbuf = rdnbr_negbuf %>% rename( rdnbr_nb_ID = ID_obj, rdnbr_nb_area_m = area_m, rdnbr_nb_area_ha = area_ha, rdnbr_nb_fire_yr = fire_yr )
+```
 
 # Overlay
 
@@ -149,64 +304,113 @@ Overlay hotspot and  fire perimeter data by year in order to add attributes from
 - Fire end
 - Accuracy
 
-## Functions For overlay
+
 
 ```{r}
 head(mtbs_ee_ha)
 ```
 
-This function summarizes the mtbs polygon data within the GEE polygon 
 
-```{r}
-sum_mtbs = function(x){
-  x %>% group_by(ID_obj) %>% 
-  summarize(mtbs_sum_ha = sum(area_ha),
-            mtbs_poly_ct = tally()) -> x
-  return(x)
-}
-```
 
 ## Process
 sum_2001 = st_intersection(hotspot_2001, fire_2001) %>% sum_pt_poly()
 ```{r}
 dnbr_mtbs = st_intersection(dnbr, mtbs_ee_ha)
 rdnbr_dnbr_mtbs = st_intersection(rdnbr, dnbr_mtbs)
+rdnbr_dnbr1_mtbs = st_intersection(dnbr_negbuf, rdnbr_dnbr_mtbs)
+rdnbr1_dnbr1_mtbs = st_intersection(rdnbr_negbuf, rdnbr_dnbr1_mtbs)
 ```
 
 
 ```{r}
-
-head(rdnbr_dnbr_mtbs)
+head(rdnbr1_dnbr1_mtbs)
 ```
 
 ```{r}
-st_geometry(rdnbr_dnbr_mtbs) <- NULL
+st_geometry(rdnbr1_dnbr1_mtbs) <- NULL
 ```
   mutate(dif_mtbs_dnbr = mtbs_area_ha - dnbr_area_ha) %>%
   mutate(dif_mtbs_rdnbr = mtbs_area_ha - rdnbr_area_ha)
-  
-```{r}
-as.numeric(rdnbr_dnbr_mtbs$mtbs_area_ha)
-```
 
 ```{r}
-df_rdnbr_dnbr_mtbs = rdnbr_dnbr_mtbs %>% 
-  dplyr::select(UNQEFIREID, MAP_METHOD, INCIDENT, mtbs_area_m:index.1, rdnbr_area_m:FIRE_YEAR) %>%
+df_rdnbr_dnbr_mtbs = rdnbr1_dnbr1_mtbs %>% 
+  dplyr::select(UNQEFIREID, MAP_METHOD, INCIDENT, mtbs_area_ha, dnbr_ID, dnbr_area_ha,  dnbr_nb_ID, dnbr_nb_area_ha, rdnbr_ID, rdnbr_area_ha, rdnbr_nb_ID, rdnbr_nb_area_ha) %>%
   mutate(mtbs_area_ha = as.numeric(mtbs_area_ha))
 
 ```
 
 ```{r}
 head(df_rdnbr_dnbr_mtbs)
-str(df_rdnbr_dnbr_mtbs)
+```
+
+
+```{r eval=FALSE, include=FALSE}
+write.csv(df_rdnbr_dnbr_mtbs,  "../outputs/csv/2021-03-03_AK_Perimeters_Compare.csv", row.names=FALSE)
+```
+
+
+# Calculate difference MTBS and GEE
+
+Calculate differences between MTBS dnBR and GEE dNBR. 
+
+```{r}
+df_rdnbr_dnbr_mtbs %>% 
+  dplyr::select(UNQEFIREID, MAP_METHOD, INCIDENT, mtbs_area_ha, dnbr_ID, dnbr_area_ha,  dnbr_nb_ID, dnbr_nb_area_ha) %>%
+  mutate(mtbs_dnbrNB = (mtbs_area_ha - dnbr_nb_area_ha)) %>%
+  mutate(mtbs_dnbr = (mtbs_area_ha - dnbr_area_ha))
+```
+## Filter for figure
+
+```{r}
+target <- c("Wall Street", "Chicken #1", "Anomaly", "Billy Creek", "Porcupine", "Upper Healy River", "North Dag", "Pingo", "Winter Tail")
+```
+
+
+filter(df, Ticker %in% target)
+
+```{r}
+mapped = df_rdnbr_dnbr_mtbs %>% 
+  dplyr::select(UNQEFIREID, MAP_METHOD, INCIDENT, mtbs_area_ha, dnbr_ID, dnbr_area_ha,  dnbr_nb_ID, dnbr_nb_area_ha) %>%
+  mutate(mtbs_dnbrNB = (mtbs_area_ha - dnbr_nb_area_ha)) %>%
+  mutate(mtbs_dnbr = (mtbs_area_ha - dnbr_area_ha)) %>%
+  filter(INCIDENT %in% target)
+
+mapped
+```
+
+
+```{r eval=FALSE, include=FALSE}
+write.csv(mapped,  "../outputs/csv/2021-03-05_AK_MappedFigure.csv", row.names=FALSE)
+```
+
+# Calculate difference 
+f01_df = as.data.frame(f01)
+Group  by MTBS fire events
+
+  mutate(mtbs_dnbrNB = (mtbs_area_ha - dnbr_nb_area_ha)) %>%
+  mutate(mtbs_dnbr = (mtbs_area_ha - dnbr_area_ha))
+```{r}
+df_rdnbr_dnbr_mtbs %>% 
+  dplyr::select(UNQEFIREID, MAP_METHOD, INCIDENT, mtbs_area_ha, dnbr_ID, dnbr_area_ha,  dnbr_nb_ID, dnbr_nb_area_ha) %>% group_by(dnbr_ID)
 ```
 
 ```{r}
-df_rdnbr_dnbr_mtbs %>% dplyr::select(UNQEFIREID:INCIDENT, mtbs_area_ha, rdnbr_area_m, dnbr_area_ha)
+df_rdnbr_dnbr_mtbs %>% 
+  dplyr::select(UNQEFIREID, MAP_METHOD, INCIDENT, mtbs_area_ha, dnbr_ID, dnbr_area_ha,  dnbr_nb_ID, dnbr_nb_area_ha) %>% 
+  group_by(dnbr_ID)  %>%
+  add_count(INCIDENT) %>%
+  arrange(dnbr_nb_ID)
+
 ```
 
 
 ```{r}
+df_rdnbr_dnbr_mtbs %>% 
+  dplyr::select(UNQEFIREID, MAP_METHOD, INCIDENT, mtbs_area_ha, dnbr_ID, dnbr_area_ha,  dnbr_nb_ID, dnbr_nb_area_ha) %>% 
+  group_by(dnbr_ID)  %>%
+  add_count(INCIDENT) %>%
+  arrange(dnbr_nb_ID)
 
-write.csv(df_rdnbr_dnbr_mtbs,  "../outputs/csv/2021-03-01_AK_Perimeters_Compare.csv", row.names=FALSE)
 ```
+
+
