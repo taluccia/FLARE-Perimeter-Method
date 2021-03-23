@@ -26,6 +26,8 @@ library(rgeos) # GIS Geometry
 library(foreign) # deals with dbf files
 library(dplyr)
 library(spatialEco)
+library(units)
+library(smoothr)
 ```
 
 
@@ -159,3 +161,40 @@ st_write(rdnbr_ha, "../outputs/clean-shapefile/AK_rdnbr_NegBuf_fire_2004.shp", d
 ```
 
 
+# Test Smoothing functions on polygons
+
+See [Smooth and Tidy Spatial Features](https://cran.r-project.org/web/packages/smoothr/vignettes/smoothr.html)
+
+
+```{r}
+plot(dnbr_ha$geometry)
+```
+
+r_poly_smooth <- smooth(r_poly_filled, method = "ksmooth", smoothness = 2)
+# plot
+plot(rasterToPolygons(r), col = NA, border = NA) # set up plot extent
+plot(r_poly_smooth, col = "#4DAF4A", border = "grey20", lwd = 1.5, add = TRUE)
+
+```{r}
+dnbr_ha_smooth <- smooth(dnbr_ha, method = "ksmooth", smoothness = 2)
+```
+
+```{r}
+plot(dnbr_ha_smooth$geometry, col = "#4DAF4A", border = "grey20", lwd = 1.5)
+```
+
+```{r eval=FALSE, include=FALSE}
+st_write(dnbr_ha_smooth, "../outputs/clean-shapefile/AK_dnbr_NegBuf_fires_2004_smooth.shp", driver="ESRI Shapefile")  
+```
+
+```{r}
+dnbr_ha_smooth20 <- smooth(dnbr_ha, method = "ksmooth", smoothness = 20)
+```
+
+```{r}
+plot(dnbr_ha_smooth20$geometry, col = "#4DAF4A", border = "grey20", lwd = 1.5)
+```
+
+```{r eval=FALSE, include=FALSE}
+st_write(dnbr_ha_smooth20, "../outputs/clean-shapefile/AK_dnbr_NegBuf_fires_2004_smooth20.shp", driver="ESRI Shapefile")  
+```
