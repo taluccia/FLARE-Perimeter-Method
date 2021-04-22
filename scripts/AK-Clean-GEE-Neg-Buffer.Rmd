@@ -56,7 +56,9 @@ ee_ak = "+proj=aea +lat_1=55 +lat_2=65 +lat_0=50 +lon_0=-154 +x_0=0 +y_0=0 +ellp
 ```{r}
 dnbr = readOGR("../data/gee_fire_perimeters/2004_AK_fires_dnbr.shp", "2004_AK_fires_dnbr")
 rdnbr = readOGR("../data/gee_fire_perimeters/2004_AK_fires_rdnbr.shp", "2004_AK_fires_rdnbr")
-
+```
+```{r}
+dnbr3338 = readOGR("../data/gee_fire_perimeters/2004_3338AK_fires_dnbr.shp", "2004_3338AK_fires_dnbr")
 ```
 
 ```{r}
@@ -70,12 +72,18 @@ dnbr_ee = spTransform(dnbr, CRS(ee_ak))
 rdnbr_ee = spTransform(rdnbr, CRS(ee_ak))
 ```
 
+```{r}
+dnbr3338_ee = spTransform(dnbr3338, CRS(ee_ak))
+```
+
 # Remove holes inside polygons
 ```{r}
 dnbr_nh = remove.holes(dnbr_ee)
 rdnbr_nh = remove.holes(rdnbr_ee)
 ```
-
+```{r}
+dnbr3338_nh = remove.holes(dnbr3338_ee)
+```
 # Apply negative buffer
 
 ```{r}
@@ -84,6 +92,10 @@ rdnbr_buf = gBuffer(rdnbr_nh, width = -500, capStyle="ROUND", joinStyle="ROUND")
 
 ```
 
+```{r}
+dnbr3338_buf = gBuffer(dnbr3338_nh, width = -500, capStyle="ROUND", joinStyle="ROUND")
+
+```
 
 
 # Convert from sp to sf
@@ -92,6 +104,9 @@ dnbr_sf = st_as_sf(dnbr_buf)
 rdnbr_sf = st_as_sf(rdnbr_buf)
 ```
 
+```{r}
+dnbr3338_sf = st_as_sf(dnbr3338_buf)
+```
 # Covert from Multipolygon to Polygon
 
 ```{r}
@@ -99,6 +114,9 @@ dnbr_sf = st_cast(dnbr_sf,"POLYGON")
 rdnbr_sf = st_cast(rdnbr_sf,"POLYGON")
 ```
 
+```{r}
+dnbr3338_sf = st_cast(dnbr3338_sf,"POLYGON")
+```
 
 ```{r}
 dim(dnbr_sf)
@@ -110,6 +128,10 @@ dim(rdnbr_sf)
 head(rdnbr_sf)
 ```
 
+```{r}
+dim(dnbr3338_sf)
+head(dnbr3338_sf)
+```
 # Create attributes
 - ID based on row number
 - area in meters squared, area_m
@@ -122,6 +144,9 @@ dnbr_at = dnbr_sf %>% dplyr::mutate(ID_obj = row_number()) %>% dplyr::mutate(are
 rdnbr_at = rdnbr_sf %>% dplyr::mutate(ID_obj = row_number()) %>% dplyr::mutate(area_m = round(st_area(rdnbr_sf),1)) %>% dplyr::mutate(area_ha = round(area_m*0.0001, 1)) %>% dplyr::mutate(fire_yr = 2004) %>% dplyr::mutate(index = "rdnbr") 
 ```
 
+```{r}
+dnbr3338_at = dnbr3338_sf %>% dplyr::mutate(ID_obj = row_number()) %>% dplyr::mutate(area_m = round(st_area(dnbr3338_sf),1)) %>% dplyr::mutate(area_ha = round(area_m*0.0001, 1)) %>% dplyr::mutate(fire_yr = 2004) %>% dplyr::mutate(index = "dnbr") 
+```
 
 ```{r}
 head(dnbr_at$area_ha)
@@ -136,16 +161,28 @@ max(rdnbr_at$area_ha)
 ```
 
 ```{r}
+head(dnbr3338_at$area_ha)
+min(dnbr3338_at$area_ha)
+max(dnbr3338_at$area_ha)
+```
+
+```{r}
 summary(dnbr_at)
 summary(rdnbr_at)
 ```
 
+```{r}
+summary(dnbr3338_at)
+```
 
 # Remove polygons less than 400 ha
 ```{r}
 dnbr_ha = filter(dnbr_at, as.numeric(dnbr_at$area_ha) >= 400)
 rdnbr_ha = filter(rdnbr_at, as.numeric(rdnbr_at$area_ha) >= 400)
+```
 
+```{r}
+dnbr3338_ha = filter(dnbr3338_at, as.numeric(dnbr3338_at$area_ha) >= 400)
 ```
 
 ```{r}
@@ -153,6 +190,9 @@ summary(dnbr_ha)
 summary(rdnbr_ha)
 ```
 
+```{r}
+summary(dnbr3338_ha)
+```
 # Write to shapefile
 
 ```{r eval=FALSE, include=FALSE}
@@ -160,6 +200,9 @@ st_write(dnbr_ha, "../outputs/clean-shapefile/AK_dnbr_NegBuf_fires_2004.shp", dr
 st_write(rdnbr_ha, "../outputs/clean-shapefile/AK_rdnbr_NegBuf_fire_2004.shp", driver="ESRI Shapefile")  
 ```
 
+```{r eval=FALSE, include=FALSE}
+st_write(dnbr3338_ha, "../outputs/clean-shapefile/AK_3338dnbr_NegBuf_fires_2004.shp", driver="ESRI Shapefile") 
+```
 
 # Test Smoothing functions on polygons
 
