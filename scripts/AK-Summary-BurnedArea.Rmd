@@ -1,0 +1,105 @@
+---
+title: "Summary Stats for AK 2004"
+author: "Anna Talucci"
+date: "4/22/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+# Overview
+
+What is included in this script:
+
+Read in Alaska 2004 vectors from GEE that were run on RdNBR and dNBR binary imagery. Script below will clean and remove holes and add atttributes.
+
+
+# Packages
+
+```{r include=FALSE}
+
+library(sf)
+library(dplyr)
+
+```
+
+
+# Data
+
+```{r}
+dnbr3338 = st_read("../data/clean-shapefile/AK_3338dnbr_NegBuf_fires_2004.shp", "AK_3338dnbr_NegBuf_fires_2004")
+dnbr = st_read("../data/clean-shapefile/AK_dnbr_NegBuf_fires_2004.shp", "AK_dnbr_NegBuf_fires_2004")
+rdnbr = st_read("../data/clean-shapefile/AK_rdnbr_NegBuf_fire_2004.shp", "AK_rdnbr_NegBuf_fire_2004")
+mtbs = st_read("../data/MTBS_Fires_2004/AK_Fires_2004.shp", "AK_Fires_2004")
+```
+MTBS_Fires_2004
+# Remove geometry
+
+```{r}
+st_geometry(dnbr3338) <- NULL
+st_geometry(dnbr) <- NULL
+st_geometry(rdnbr) <- NULL
+st_geometry(mtbs) <- NULL
+```
+## Make into Dataframe
+
+```{r}
+dnbr3338_df = as.data.frame(dnbr3338)
+dnbr_df = as.data.frame(dnbr)
+rdnbr_df = as.data.frame(rdnbr)
+mtbs_df = as.data.frame(mtbs)
+```
+
+```{r}
+head(mtbs_df)
+```
+# Annual Summary Data
+
+## Frequency
+
+```{r}
+dnbr3338_df  %>% count(fire_yr, name='n_fires')
+dnbr_df  %>% count(fire_yr, name='n_fires')
+rdnbr_df  %>% count(fire_yr, name='n_fires')
+mtbs_df  %>% count(fire_yr, name='n_fires')
+```
+
+
+
+```{r}
+( sumdat2 = summarise( group_by(d1_20, "Fire Year" = fire_yr),
+n = n(),
+Mean = mean(area_ha),
+SD = sd(area_ha),
+Median = median(area_ha),
+Minimum = min(area_ha),
+Maximum = max(area_ha),
+Total = sum(area_ha)) )
+```
+
+```{r eval=FALSE, include=FALSE}
+write.csv(sumdat2,"../outputs/2020-11-19_FLARE-Fire-Summary_total.csv", row.names = FALSE)
+```
+
+```{r}
+( sumdat3 = summarise( sumdat2,
+mean_n = mean(n),
+mean_size = mean(Mean),
+mean_maximum = mean(Maximum),
+mean_annual_area = mean(Total)) ) 
+```
+
+
+```{r}
+summarise(d1_20, 
+n = n(),
+Total = sum(area_ha),
+Mean = mean(area_ha),
+SD = sd(area_ha),
+Median = median(area_ha),
+Minimum = min(area_ha),
+Maximum = max(area_ha) ) 
+```
