@@ -33,9 +33,12 @@ library(dplyr)
 dnbr3338 = st_read("../data/clean-shapefile/AK_3338dnbr_NegBuf_fires_2004.shp", "AK_3338dnbr_NegBuf_fires_2004")
 dnbr = st_read("../data/clean-shapefile/AK_dnbr_NegBuf_fires_2004.shp", "AK_dnbr_NegBuf_fires_2004")
 rdnbr = st_read("../data/clean-shapefile/AK_rdnbr_NegBuf_fire_2004.shp", "AK_rdnbr_NegBuf_fire_2004")
-mtbs = st_read("../data/MTBS_Fires_2004/AK_Fires_2004.shp", "AK_Fires_2004")
+mtbs = st_read("../data/clean-shapefile/AK_mtbs_fires_2004.shp", "AK_mtbs_fires_2004")
 ```
-MTBS_Fires_2004
+
+```{r}
+head(mtbs)
+```
 # Remove geometry
 
 ```{r}
@@ -54,12 +57,12 @@ mtbs_df = as.data.frame(mtbs)
 ```
 
 ```{r}
+head(dnbr3338_df)
+head(dnbr_df)
+head(rdnbr_df)
 head(mtbs_df)
 ```
-# Annual Summary Data
-
 ## Frequency
-
 ```{r}
 dnbr3338_df  %>% count(fire_yr, name='n_fires')
 dnbr_df  %>% count(fire_yr, name='n_fires')
@@ -67,10 +70,24 @@ rdnbr_df  %>% count(fire_yr, name='n_fires')
 mtbs_df  %>% count(fire_yr, name='n_fires')
 ```
 
-
+#  Subset data and combine
+```{r}
+dnbr3338_sub = dnbr3338_df %>% dplyr::select(index, fire_yr, area_m, area_ha)
+dnbr_sub = dnbr_df %>% dplyr::select(index, fire_yr, area_m, area_ha)
+rdnbr_sub = rdnbr_df %>% dplyr::select(index, fire_yr, area_m, area_ha)
+mtbs_sub = mtbs_df %>% dplyr::select(index, fire_yr, area_m, area_ha)
+```
 
 ```{r}
-( sumdat2 = summarise( group_by(d1_20, "Fire Year" = fire_yr),
+df_1 = bind_rows(dnbr3338_sub, dnbr_sub)
+df_2 = bind_rows(df_1, rdnbr_sub)
+ak_df = bind_rows(df_2, mtbs_sub)
+```
+
+# Annual Summary Data
+
+```{r}
+( sumdat2 = summarise( group_by(ak_df, "index" = index),
 n = n(),
 Mean = mean(area_ha),
 SD = sd(area_ha),
@@ -81,25 +98,7 @@ Total = sum(area_ha)) )
 ```
 
 ```{r eval=FALSE, include=FALSE}
-write.csv(sumdat2,"../outputs/2020-11-19_FLARE-Fire-Summary_total.csv", row.names = FALSE)
-```
-
-```{r}
-( sumdat3 = summarise( sumdat2,
-mean_n = mean(n),
-mean_size = mean(Mean),
-mean_maximum = mean(Maximum),
-mean_annual_area = mean(Total)) ) 
+write.csv(sumdat2,"../outputs/2021-04-22_AK-Fire-Summary_total.csv", row.names = FALSE)
 ```
 
 
-```{r}
-summarise(d1_20, 
-n = n(),
-Total = sum(area_ha),
-Mean = mean(area_ha),
-SD = sd(area_ha),
-Median = median(area_ha),
-Minimum = min(area_ha),
-Maximum = max(area_ha) ) 
-```

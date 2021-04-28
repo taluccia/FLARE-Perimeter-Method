@@ -1,0 +1,57 @@
+---
+title: "MTBS data"
+author: "Anna Talucci"
+date: "4/22/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Overview
+
+What is included in this script:
+
+Read in Alaska 2004 vectors from GEE that were run on RdNBR and dNBR binary imagery. Script below will clean and remove holes and add atttributes.
+
+
+# Packages
+
+```{r include=FALSE}
+
+library(sf)
+library(dplyr)
+
+```
+
+# Data
+
+```{r}
+mtbs = st_read("../data/MTBS_Fires_2004/AK_Fires_2004.shp", "AK_Fires_2004")
+```
+
+```{r}
+head(mtbs)
+```
+
+
+
+```{r}
+
+mtbs_ha = mtbs %>%  
+  dplyr::select(FIRE_YEAR, GIS_ACRES, INCIDENT, UNQEFIREID, geometry) %>%  
+  dplyr::mutate(area_m = as.numeric(round(st_area(mtbs),1))) %>% 
+  dplyr::mutate(area_ha = as.numeric(round(area_m*0.0001, 1))) %>% 
+  dplyr::mutate(fire_yr = 2004) %>% 
+  dplyr::mutate(index = "mtbs") 
+```
+
+```{r}
+mtbs_ha_400 = filter(mtbs_ha, as.numeric(mtbs_ha$area_ha) >= 400)
+```
+
+
+```{r eval=FALSE, include=FALSE}
+st_write(mtbs_ha_400, "../outputs/clean-shapefile/AK_mtbs_fires_2004.shp", driver="ESRI Shapefile") 
+```

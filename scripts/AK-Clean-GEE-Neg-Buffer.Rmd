@@ -145,7 +145,7 @@ rdnbr_at = rdnbr_sf %>% dplyr::mutate(ID_obj = row_number()) %>% dplyr::mutate(a
 ```
 
 ```{r}
-dnbr3338_at = dnbr3338_sf %>% dplyr::mutate(ID_obj = row_number()) %>% dplyr::mutate(area_m = round(st_area(dnbr3338_sf),1)) %>% dplyr::mutate(area_ha = round(area_m*0.0001, 1)) %>% dplyr::mutate(fire_yr = 2004) %>% dplyr::mutate(index = "dnbr") 
+dnbr3338_at = dnbr3338_sf %>% dplyr::mutate(ID_obj = row_number()) %>% dplyr::mutate(area_m = round(st_area(dnbr3338_sf),1)) %>% dplyr::mutate(area_ha = round(area_m*0.0001, 1)) %>% dplyr::mutate(fire_yr = 2004) %>% dplyr::mutate(index = "3338dnbr") 
 ```
 
 ```{r}
