@@ -1,0 +1,275 @@
+---
+title: "Test ReduceToVector options from GEE"
+author: "Anna Talucci"
+date: "4/27/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Overview
+
+What is included in this script:
+
+Read in Alaska 2004 vectors from GEE that were run on RdNBR and dNBR binary imagery. Script below will clean and remove holes and add atttributes.
+
+
+# Packages
+
+```{r include=FALSE}
+library(sp)
+library(sf)
+library(rgdal) # geospatial data
+library(raster)
+library(rgeos) # GIS Geometry
+library(foreign) # deals with dbf files
+library(dplyr)
+library(spatialEco)
+library(units)
+library(smoothr)
+```
+
+
+
+
+# Projections
+[Alaska Equal Area Conic](https://spatialreference.org/ref/esri/102006/)
+
++proj=aea +lat_1=55 +lat_2=65 +lat_0=50 +lon_0=-154 +x_0=0 +y_0=0 +ellps=GRS80 +datum=NAD83 +units=m +no_defs
+
+```{r}
+ee_ak = "+proj=aea +lat_1=55 +lat_2=65 +lat_0=50 +lon_0=-154 +x_0=0 +y_0=0 +ellps=GRS80 +datum=NAD83 +units=m +no_defs"
+```
+
+
+# Read in shapefile
+
+```{r}
+opt1 = readOGR("../data/GEE/2004_mean30PolyFalseFalse.shp", "2004_mean30PolyFalseFalse")
+opt2= readOGR("../data/GEE/2004_mean30PolyFalseTrue.shp", "2004_mean30PolyFalseTrue")
+opt3= readOGR("../data/GEE/2004_mean30PolyTrueFalse.shp", "2004_mean30PolyTrueFalse")
+```
+
+```{r}
+opt4 = readOGR("../data/GEE/2004_mean90PolyFalseFalse.shp", "2004_mean90PolyFalseFalse")
+opt5= readOGR("../data/GEE/2004_mean90PolyFalseTrue.shp", "2004_mean90PolyFalseTrue")
+opt6 = readOGR("../data/GEE/2004_mean90PolyTrueFalse.shp", "2004_mean90PolyTrueFalse")
+```
+
+# Reproject in Equal area
+
+```{r}
+opt1_ee = spTransform(opt1, CRS(ee_ak))
+opt2_ee = spTransform(opt2, CRS(ee_ak))
+opt3_ee = spTransform(opt3, CRS(ee_ak))
+opt4_ee = spTransform(opt4, CRS(ee_ak))
+opt5_ee = spTransform(opt5, CRS(ee_ak))
+opt6_ee = spTransform(opt6, CRS(ee_ak))
+```
+
+#Buffer
+```{r}
+opt1_buff = st_buffer(opt1_ee, dist=1000, endCapStyle = "FLAT", joinStyle = "ROUND")
+opt2_buff = st_buffer(opt2_ee, dist=1000, endCapStyle = "FLAT", joinStyle = "ROUND")
+opt3_buff = st_buffer(opt3_ee, dist=1000, endCapStyle = "FLAT", joinStyle = "ROUND")
+opt4_buff = st_buffer(opt4_ee, dist=1000, endCapStyle = "FLAT", joinStyle = "ROUND")
+opt5_buff = st_buffer(opt5_ee, dist=1000, endCapStyle = "FLAT", joinStyle = "ROUND")
+opt6_buff = st_buffer(opt6_ee, dist=1000, endCapStyle = "FLAT", joinStyle = "ROUND")
+```
+
+
+# Remove holes inside polygons
+```{r}
+opt1_nh = remove.holes(opt1_sp)
+opt2_nh = remove.holes(opt2_sp)
+opt3_nh = remove.holes(opt3_sp)
+opt4_nh = remove.holes(opt4_sp)
+opt5_nh = remove.holes(opt5_sp)
+opt6_nh = remove.holes(opt6_sp)
+
+```
+
+# Apply negative buffer
+
+```{r}
+opt1_nbuf = gBuffer(opt1_nh, width = -1000, capStyle="ROUND", joinStyle="ROUND")
+opt2_nbuf = gBuffer(opt2_nh, width = -1000, capStyle="ROUND", joinStyle="ROUND")
+opt3_nbuf = gBuffer(opt3_nh, width = -1000, capStyle="ROUND", joinStyle="ROUND")
+opt4_nbuf = gBuffer(opt4_nh, width = -1000, capStyle="ROUND", joinStyle="ROUND")
+opt5_nbuf = gBuffer(opt5_nh, width = -1000, capStyle="ROUND", joinStyle="ROUND")
+opt6_nbuf = gBuffer(opt6_nh, width = -1000, capStyle="ROUND", joinStyle="ROUND")
+
+```
+
+
+
+# Convert from sp to sf
+```{r}
+opt1_sf = st_as_sf(opt1_nbuf)
+opt2_sf = st_as_sf(opt2_nbuf)
+opt3_sf = st_as_sf(opt3_nbuf)
+opt4_sf = st_as_sf(opt4_nbuf)
+opt5_sf = st_as_sf(opt5_nbuf)
+opt6_sf = st_as_sf(opt6_nbuf)
+
+```
+
+```{r}
+plot(opt1_buff$geometry)
+```
+
+# Covert from Multipolygon to Polygon
+all_shp_un = sf::st_union(all_shp)
+```{r eval=FALSE, include=FALSE}
+opt1_union = st_union(opt1_sf)
+opt2_union = st_union(opt2_sf)
+opt3_union = st_union(opt3_sf)
+opt4_union = st_union(opt4_sf)
+opt5_union = st_union(opt5_sf)
+opt6_union = st_union(opt6_sf)
+
+```
+
+```{r eval=FALSE, include=FALSE}
+opt1_cast = st_cast(opt1_union,"POLYGON")
+opt2_cast = st_cast(opt2_union,"POLYGON")
+opt3_cast = st_cast(opt3_union,"POLYGON")
+opt4_cast = st_cast(opt4_union,"POLYGON")
+opt5_cast = st_cast(opt5_union,"POLYGON")
+opt6_cast = st_cast(opt6_union,"POLYGON")
+
+```
+
+
+```{r}
+dim(opt1_cast)
+dim(opt2_cast)
+dim(opt3_cast)
+dim(opt4_cast)
+dim(opt5_cast)
+dim(opt6_cast)
+
+```
+
+```{r}
+head(opt1_cast)
+head(opt2_cast)
+head(opt3_cast)
+head(opt4_cast)
+head(opt5_cast)
+head(opt6_cast)
+```
+
+
+# Create attributes
+- ID based on row number
+- area in meters squared, area_m
+- area in Hectares, area_ha
+- Year of the burn, fire_yr
+
+```{r}
+opt1_at = opt1_cast %>% dplyr::mutate(ID_obj = row_number()) %>% dplyr::mutate(area_m = round(st_area(opt1_cast),1)) %>% dplyr::mutate(area_ha = round(area_m*0.0001, 1)) %>% dplyr::mutate(fire_yr = 2004) %>% dplyr::mutate(index = "dnbr") 
+```
+
+```{r}
+opt2_at = opt2_cast %>% dplyr::mutate(ID_obj = row_number()) %>% dplyr::mutate(area_m = round(st_area(opt2_cast),1)) %>% dplyr::mutate(area_ha = round(area_m*0.0001, 1)) %>% dplyr::mutate(fire_yr = 2004) %>% dplyr::mutate(index = "dnbr") 
+```
+
+```{r}
+opt3_at = opt3_cast %>% dplyr::mutate(ID_obj = row_number()) %>% dplyr::mutate(area_m = round(st_area(opt3_cast),1)) %>% dplyr::mutate(area_ha = round(area_m*0.0001, 1)) %>% dplyr::mutate(fire_yr = 2004) %>% dplyr::mutate(index = "dnbr") 
+```
+
+```{r}
+opt4_at = opt4_cast %>% dplyr::mutate(ID_obj = row_number()) %>% dplyr::mutate(area_m = round(st_area(opt4_cast),1)) %>% dplyr::mutate(area_ha = round(area_m*0.0001, 1)) %>% dplyr::mutate(fire_yr = 2004) %>% dplyr::mutate(index = "dnbr") 
+```
+
+```{r}
+opt5_at = opt5_cast %>% dplyr::mutate(ID_obj = row_number()) %>% dplyr::mutate(area_m = round(st_area(opt5_cast),1)) %>% dplyr::mutate(area_ha = round(area_m*0.0001, 1)) %>% dplyr::mutate(fire_yr = 2004) %>% dplyr::mutate(index = "dnbr") 
+```
+
+```{r}
+opt6_at = opt6_cast %>% dplyr::mutate(ID_obj = row_number()) %>% dplyr::mutate(area_m = round(st_area(opt6_cast),1)) %>% dplyr::mutate(area_ha = round(area_m*0.0001, 1)) %>% dplyr::mutate(fire_yr = 2004) %>% dplyr::mutate(index = "dnbr") 
+```
+
+```{r}
+min(opt1_at$area_ha)
+min(opt2_at$area_ha)
+min(opt3_at$area_ha)
+min(opt4_at$area_ha)
+min(opt5_at$area_ha)
+min(opt6_at$area_ha)
+```
+
+```{r}
+max(opt1_at$area_ha)
+max(opt2_at$area_ha)
+max(opt3_at$area_ha)
+max(opt4_at$area_ha)
+max(opt5_at$area_ha)
+max(opt6_at$area_ha)
+```
+
+
+# Remove polygons less than 400 ha
+```{r}
+opt1_ha = filter(opt1_at, as.numeric(opt1_at$area_ha) >= 400)
+opt2_ha = filter(opt2_at, as.numeric(opt2_at$area_ha) >= 400)
+opt3_ha = filter(opt3_at, as.numeric(opt3_at$area_ha) >= 400)
+opt4_ha = filter(opt4_at, as.numeric(opt4_at$area_ha) >= 400)
+opt5_ha = filter(opt5_at, as.numeric(opt5_at$area_ha) >= 400)
+opt6_ha = filter(opt6_at, as.numeric(opt6_at$area_ha) >= 400)
+```
+
+
+# Write to shapefile
+
+```{r eval=FALSE, include=FALSE}
+st_write(opt1_ha, "../outputs/clean-shapefile/opt1.shp", driver="ESRI Shapefile") 
+st_write(opt2_ha, "../outputs/clean-shapefile/opt2.shp", driver="ESRI Shapefile") 
+st_write(opt3_ha, "../outputs/clean-shapefile/opt3.shp", driver="ESRI Shapefile") 
+st_write(opt4_ha, "../outputs/clean-shapefile/opt4.shp", driver="ESRI Shapefile") 
+st_write(opt5_ha, "../outputs/clean-shapefile/opt5.shp", driver="ESRI Shapefile") 
+st_write(opt6_ha, "../outputs/clean-shapefile/opt6.shp", driver="ESRI Shapefile") 
+```
+
+
+
+# Test Smoothing functions on polygons
+
+See [Smooth and Tidy Spatial Features](https://cran.r-project.org/web/packages/smoothr/vignettes/smoothr.html)
+
+
+```{r}
+plot(dnbr_ha$geometry)
+```
+
+r_poly_smooth <- smooth(r_poly_filled, method = "ksmooth", smoothness = 2)
+# plot
+plot(rasterToPolygons(r), col = NA, border = NA) # set up plot extent
+plot(r_poly_smooth, col = "#4DAF4A", border = "grey20", lwd = 1.5, add = TRUE)
+
+```{r}
+dnbr_ha_smooth <- smooth(dnbr_ha, method = "ksmooth", smoothness = 2)
+```
+
+```{r}
+plot(dnbr_ha_smooth$geometry, col = "#4DAF4A", border = "grey20", lwd = 1.5)
+```
+
+```{r eval=FALSE, include=FALSE}
+st_write(dnbr_ha_smooth, "../outputs/clean-shapefile/AK_dnbr_NegBuf_fires_2004_smooth.shp", driver="ESRI Shapefile")  
+```
+
+```{r}
+dnbr_ha_smooth20 <- smooth(dnbr_ha, method = "ksmooth", smoothness = 20)
+```
+
+```{r}
+plot(dnbr_ha_smooth20$geometry, col = "#4DAF4A", border = "grey20", lwd = 1.5)
+```
+
+```{r eval=FALSE, include=FALSE}
+st_write(dnbr_ha_smooth20, "../outputs/clean-shapefile/AK_dnbr_NegBuf_fires_2004_smooth20.shp", driver="ESRI Shapefile")  
+```
