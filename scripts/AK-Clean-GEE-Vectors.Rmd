@@ -14,7 +14,9 @@ knitr::opts_chunk$set(echo = TRUE)
 
 What is included in this script:
 
-Read in Alaska 2004 vectors from GEE that were run on RdNBR and dNBR binary imagery. Script below will clean and remove holes and add atttributes.
+Read in Alaska 2004 equal area vectors from GEE that were run on RdNBR and dNBR binary imagery. The input vectors recieved no geospatial processing in GEE beyond the delineation of vectors. 
+
+Script below will clean and remove holes and add atttributes.
 
 
 # Packages
@@ -30,32 +32,21 @@ library(dplyr)
 library(spatialEco)
 ```
 
-
-
-
-# Projections
-
-WGS 84 need for gee
-```{r}
-wgs_proj =  "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs "
-
-```
-
+# Projection
 
 [Alaska Equal Area Conic](https://spatialreference.org/ref/esri/102006/)
 
 +proj=aea +lat_1=55 +lat_2=65 +lat_0=50 +lon_0=-154 +x_0=0 +y_0=0 +ellps=GRS80 +datum=NAD83 +units=m +no_defs
 
 ```{r}
-ee_ak = "+proj=aea +lat_1=55 +lat_2=65 +lat_0=50 +lon_0=-154 +x_0=0 +y_0=0 +ellps=GRS80 +datum=NAD83 +units=m +no_defs"
+ea_ak = "+proj=aea +lat_1=55 +lat_2=65 +lat_0=50 +lon_0=-154 +x_0=0 +y_0=0 +ellps=GRS80 +datum=NAD83 +units=m +no_defs"
 ```
-
 
 # Read in shapefile
 
 ```{r}
-dnbr = readOGR("../data/gee_fire_perimeters/2004_AK_fires_dnbr.shp", "2004_AK_fires_dnbr")
-rdnbr = readOGR("../data/gee_fire_perimeters/2004_AK_fires_rdnbr.shp", "2004_AK_fires_rdnbr")
+dnbr = readOGR("../data/gee_fire_perimeters/2004_AK3338dNBR.shp", "2004_AK3338dNBR")
+rdnbr = readOGR("../data/gee_fire_perimeters/2004_AK3338RdNBR.shp", "2004_AK3338RdNBR")
 
 ```
 
@@ -66,39 +57,46 @@ plot(dnbr)
 # Reproject in Equal area
 
 ```{r}
-dnbr_ee = spTransform(dnbr, CRS(ee_ak))
-rdnbr_ee = spTransform(rdnbr, CRS(ee_ak))
+dnbr_ea = spTransform(dnbr, CRS(ea_ak))
+rdnbr_ea = spTransform(rdnbr, CRS(ea_ak))
+```
+
+```{r}
+dnbr_buff = gBuffer(dnbr_ea, width = 1000, capStyle="ROUND", joinStyle="ROUND")
+rdnbr_buff = gBuffer(rdnbr_ea, width = 1000, capStyle="ROUND", joinStyle="ROUND")
 ```
 
 # Remove holes inside polygons
 ```{r}
-dnbr_nh = remove.holes(dnbr_ee)
-rdnbr_nh = remove.holes(rdnbr_ee)
+dnbr_nh = remove.holes(dnbr_buff)
+rdnbr_nh = remove.holes(rdnbr_buff)
 ```
 
+# Apply negative buffer
+```{r}
+dnbr_nbuf = gBuffer(dnbr_nh, width = -1000, capStyle="ROUND", joinStyle="ROUND")
+rdnbr_nbuf = gBuffer(rdnb_nh, width = -1000, capStyle="ROUND", joinStyle="ROUND")
+```
 
 # Convert from sp to sf
 ```{r}
-dnbr_sf = st_as_sf(dnbr_nh)
-rdnbr_sf = st_as_sf(rdnbr_nh)
+dnbr_sf = st_as_sf(dnbr_nbuf)
+rdnbr_sf = st_as_sf(rdnbr_nbuf)
 ```
 
 # Covert from Multipolygon to Polygon
-
 ```{r}
-dnbr_sf = st_cast(dnbr_sf,"POLYGON")
-rdnbr_sf = st_cast(rdnbr_sf,"POLYGON")
+dnbr_cast = st_cast(dnbr_sf,"POLYGON")
+rdnbr_cast = st_cast(rdnbr_sf,"POLYGON")
 ```
 
 
 ```{r}
-dim(dnbr_sf)
-head(dnbr_sf)
+dnbr_cast
 ```
 
 ```{r}
-dim(rdnbr_sf)
-head(rdnbr_sf)
+rdnbr_cast
 ```
 
 # Create attributes
@@ -108,9 +106,9 @@ head(rdnbr_sf)
 - Year of the burn, fire_yr
 
 ```{r}
-dnbr_at = dnbr_sf %>% dplyr::mutate(ID_obj = row_number()) %>% dplyr::mutate(area_m = round(st_area(dnbr_sf),1)) %>% dplyr::mutate(area_ha = round(area_m*0.0001, 1)) %>% dplyr::mutate(fire_yr = 2004) %>% dplyr::mutate(index = "dnbr") 
+dnbr_at = dnbr_cast %>% dplyr::mutate(ID_obj = row_number()) %>% dplyr::mutate(area_m = round(st_area(dnbr_cast),1)) %>% dplyr::mutate(area_ha = round(area_m*0.0001, 1)) %>% dplyr::mutate(fire_yr = 2004) %>% dplyr::mutate(index = "dnbr") 
 
-rdnbr_at = rdnbr_sf %>% dplyr::mutate(ID_obj = row_number()) %>% dplyr::mutate(area_m = round(st_area(rdnbr_sf),1)) %>% dplyr::mutate(area_ha = round(area_m*0.0001, 1)) %>% dplyr::mutate(fire_yr = 2004) %>% dplyr::mutate(index = "rdnbr") 
+rdnbr_at = rdnbr_cast %>% dplyr::mutate(ID_obj = row_number()) %>% dplyr::mutate(area_m = round(st_area(rdnbr_cast),1)) %>% dplyr::mutate(area_ha = round(area_m*0.0001, 1)) %>% dplyr::mutate(fire_yr = 2004) %>% dplyr::mutate(index = "rdnbr") 
 ```
 
 
@@ -147,8 +145,8 @@ summary(rdnbr_ha)
 # Write to shapefile
 
 ```{r eval=FALSE, include=FALSE}
-st_write(dnbr_ha, "../outputs/clean-shapefile/AK_dnbr_fire_ha400_2004.shp", driver="ESRI Shapefile") 
-st_write(rdnbr_ha, "../outputs/clean-shapefile/AK_rdnbr_fire_ha400_2004.shp", driver="ESRI Shapefile")  
+st_write(dnbr_ha, "../outputs/clean-shapefile/AK_EAdnbrFiresHa400_2004.shp", driver="ESRI Shapefile") 
+st_write(rdnbr_ha, "../outputs/clean-shapefile/AK_EArdnbrFiresHa400_2004.shp", driver="ESRI Shapefile")  
 ```
 
 
