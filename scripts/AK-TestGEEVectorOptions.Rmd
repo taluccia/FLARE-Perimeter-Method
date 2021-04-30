@@ -46,7 +46,7 @@ ee_ak = "+proj=aea +lat_1=55 +lat_2=65 +lat_0=50 +lon_0=-154 +x_0=0 +y_0=0 +ellp
 
 # Read in shapefile
 
-```{r}
+```{r eval=FALSE, include=FALSE}
 opt1 = readOGR("../data/GEE/2004_mean30PolyFalseFalse.shp", "2004_mean30PolyFalseFalse")
 opt2= readOGR("../data/GEE/2004_mean30PolyFalseTrue.shp", "2004_mean30PolyFalseTrue")
 opt3= readOGR("../data/GEE/2004_mean30PolyTrueFalse.shp", "2004_mean30PolyTrueFalse")
@@ -60,43 +60,56 @@ opt6 = readOGR("../data/GEE/2004_mean90PolyTrueFalse.shp", "2004_mean90PolyTrueF
 
 # Reproject in Equal area
 
-```{r}
+```{r eval=FALSE, include=FALSE}
 opt1_ee = spTransform(opt1, CRS(ee_ak))
 opt2_ee = spTransform(opt2, CRS(ee_ak))
 opt3_ee = spTransform(opt3, CRS(ee_ak))
+```
+
+```{r}
 opt4_ee = spTransform(opt4, CRS(ee_ak))
 opt5_ee = spTransform(opt5, CRS(ee_ak))
 opt6_ee = spTransform(opt6, CRS(ee_ak))
 ```
 
 #Buffer
-```{r}
-opt1_buff = st_buffer(opt1_ee, dist=1000, endCapStyle = "FLAT", joinStyle = "ROUND")
-opt2_buff = st_buffer(opt2_ee, dist=1000, endCapStyle = "FLAT", joinStyle = "ROUND")
-opt3_buff = st_buffer(opt3_ee, dist=1000, endCapStyle = "FLAT", joinStyle = "ROUND")
-opt4_buff = st_buffer(opt4_ee, dist=1000, endCapStyle = "FLAT", joinStyle = "ROUND")
-opt5_buff = st_buffer(opt5_ee, dist=1000, endCapStyle = "FLAT", joinStyle = "ROUND")
-opt6_buff = st_buffer(opt6_ee, dist=1000, endCapStyle = "FLAT", joinStyle = "ROUND")
+
+```{r eval=FALSE, include=FALSE}
+opt1_buff = gBuffer(opt1_ee, width = 1000, capStyle="ROUND", joinStyle="ROUND")
+opt2_buff = gBuffer(opt2_ee, width = 1000, capStyle="ROUND", joinStyle="ROUND")
+opt3_buff = gBuffer(opt3_ee, width = 1000, capStyle="ROUND", joinStyle="ROUND")
 ```
 
+```{r}
+opt4_buff = gBuffer(opt4_ee, width = 1000, capStyle="ROUND", joinStyle="ROUND")
+opt5_buff = gBuffer(opt5_ee, width = 1000, capStyle="ROUND", joinStyle="ROUND")
+opt6_buff = gBuffer(opt6_ee, width = 1000, capStyle="ROUND", joinStyle="ROUND")
+
+```
 
 # Remove holes inside polygons
+```{r eval=FALSE, include=FALSE}
+opt1_nh = remove.holes(opt1_buff)
+opt2_nh = remove.holes(opt2_buff)
+opt3_nh = remove.holes(opt3_buff)
+```
+
 ```{r}
-opt1_nh = remove.holes(opt1_sp)
-opt2_nh = remove.holes(opt2_sp)
-opt3_nh = remove.holes(opt3_sp)
-opt4_nh = remove.holes(opt4_sp)
-opt5_nh = remove.holes(opt5_sp)
-opt6_nh = remove.holes(opt6_sp)
+opt4_nh = remove.holes(opt4_buff)
+opt5_nh = remove.holes(opt5_buff)
+opt6_nh = remove.holes(opt6_buff)
 
 ```
 
 # Apply negative buffer
 
-```{r}
+```{r eval=FALSE, include=FALSE}
 opt1_nbuf = gBuffer(opt1_nh, width = -1000, capStyle="ROUND", joinStyle="ROUND")
 opt2_nbuf = gBuffer(opt2_nh, width = -1000, capStyle="ROUND", joinStyle="ROUND")
 opt3_nbuf = gBuffer(opt3_nh, width = -1000, capStyle="ROUND", joinStyle="ROUND")
+```
+
+```{r}
 opt4_nbuf = gBuffer(opt4_nh, width = -1000, capStyle="ROUND", joinStyle="ROUND")
 opt5_nbuf = gBuffer(opt5_nh, width = -1000, capStyle="ROUND", joinStyle="ROUND")
 opt6_nbuf = gBuffer(opt6_nh, width = -1000, capStyle="ROUND", joinStyle="ROUND")
@@ -106,10 +119,13 @@ opt6_nbuf = gBuffer(opt6_nh, width = -1000, capStyle="ROUND", joinStyle="ROUND")
 
 
 # Convert from sp to sf
-```{r}
+```{r eval=FALSE, include=FALSE}
 opt1_sf = st_as_sf(opt1_nbuf)
 opt2_sf = st_as_sf(opt2_nbuf)
 opt3_sf = st_as_sf(opt3_nbuf)
+```
+
+```{r}
 opt4_sf = st_as_sf(opt4_nbuf)
 opt5_sf = st_as_sf(opt5_nbuf)
 opt6_sf = st_as_sf(opt6_nbuf)
@@ -117,6 +133,10 @@ opt6_sf = st_as_sf(opt6_nbuf)
 ```
 
 ```{r}
+opt4_sf
+
+```
+```{r eval=FALSE, include=FALSE}
 plot(opt1_buff$geometry)
 ```
 
@@ -126,6 +146,9 @@ all_shp_un = sf::st_union(all_shp)
 opt1_union = st_union(opt1_sf)
 opt2_union = st_union(opt2_sf)
 opt3_union = st_union(opt3_sf)
+```
+
+```{r eval=FALSE, include=FALSE}
 opt4_union = st_union(opt4_sf)
 opt5_union = st_union(opt5_sf)
 opt6_union = st_union(opt6_sf)
@@ -136,27 +159,34 @@ opt6_union = st_union(opt6_sf)
 opt1_cast = st_cast(opt1_union,"POLYGON")
 opt2_cast = st_cast(opt2_union,"POLYGON")
 opt3_cast = st_cast(opt3_union,"POLYGON")
-opt4_cast = st_cast(opt4_union,"POLYGON")
-opt5_cast = st_cast(opt5_union,"POLYGON")
-opt6_cast = st_cast(opt6_union,"POLYGON")
+```
+
+```{r}
+opt4_cast = st_cast(opt4_sf,"POLYGON")
+opt5_cast = st_cast(opt5_sf,"POLYGON")
+opt6_cast = st_cast(opt6_sf,"POLYGON")
 
 ```
 
 
-```{r}
+```{r eval=FALSE, include=FALSE}
 dim(opt1_cast)
 dim(opt2_cast)
 dim(opt3_cast)
-dim(opt4_cast)
-dim(opt5_cast)
-dim(opt6_cast)
-
 ```
 
 ```{r}
+opt4_cast
+
+```
+
+```{r eval=FALSE, include=FALSE}
 head(opt1_cast)
 head(opt2_cast)
 head(opt3_cast)
+```
+
+```{r}
 head(opt4_cast)
 head(opt5_cast)
 head(opt6_cast)
@@ -169,16 +199,16 @@ head(opt6_cast)
 - area in Hectares, area_ha
 - Year of the burn, fire_yr
 
-```{r}
-opt1_at = opt1_cast %>% dplyr::mutate(ID_obj = row_number()) %>% dplyr::mutate(area_m = round(st_area(opt1_cast),1)) %>% dplyr::mutate(area_ha = round(area_m*0.0001, 1)) %>% dplyr::mutate(fire_yr = 2004) %>% dplyr::mutate(index = "dnbr") 
+```{r eval=FALSE, include=FALSE}
+opt1_at = opt1_sf %>% dplyr::mutate(ID_obj = row_number()) %>% dplyr::mutate(area_m = round(st_area(opt1_sf),1)) %>% dplyr::mutate(area_ha = round(area_m*0.0001, 1)) %>% dplyr::mutate(fire_yr = 2004) %>% dplyr::mutate(index = "dnbr") 
 ```
 
-```{r}
-opt2_at = opt2_cast %>% dplyr::mutate(ID_obj = row_number()) %>% dplyr::mutate(area_m = round(st_area(opt2_cast),1)) %>% dplyr::mutate(area_ha = round(area_m*0.0001, 1)) %>% dplyr::mutate(fire_yr = 2004) %>% dplyr::mutate(index = "dnbr") 
+```{r eval=FALSE, include=FALSE}
+opt2_at = opt2_sf %>% dplyr::mutate(ID_obj = row_number()) %>% dplyr::mutate(area_m = round(st_area(opt2_sf),1)) %>% dplyr::mutate(area_ha = round(area_m*0.0001, 1)) %>% dplyr::mutate(fire_yr = 2004) %>% dplyr::mutate(index = "dnbr") 
 ```
 
-```{r}
-opt3_at = opt3_cast %>% dplyr::mutate(ID_obj = row_number()) %>% dplyr::mutate(area_m = round(st_area(opt3_cast),1)) %>% dplyr::mutate(area_ha = round(area_m*0.0001, 1)) %>% dplyr::mutate(fire_yr = 2004) %>% dplyr::mutate(index = "dnbr") 
+```{r eval=FALSE, include=FALSE}
+opt3_at = opt3_sf %>% dplyr::mutate(ID_obj = row_number()) %>% dplyr::mutate(area_m = round(st_area(opt3_sf),1)) %>% dplyr::mutate(area_ha = round(area_m*0.0001, 1)) %>% dplyr::mutate(fire_yr = 2004) %>% dplyr::mutate(index = "dnbr") 
 ```
 
 ```{r}
@@ -193,19 +223,25 @@ opt5_at = opt5_cast %>% dplyr::mutate(ID_obj = row_number()) %>% dplyr::mutate(a
 opt6_at = opt6_cast %>% dplyr::mutate(ID_obj = row_number()) %>% dplyr::mutate(area_m = round(st_area(opt6_cast),1)) %>% dplyr::mutate(area_ha = round(area_m*0.0001, 1)) %>% dplyr::mutate(fire_yr = 2004) %>% dplyr::mutate(index = "dnbr") 
 ```
 
-```{r}
+```{r eval=FALSE, include=FALSE}
 min(opt1_at$area_ha)
 min(opt2_at$area_ha)
 min(opt3_at$area_ha)
+```
+
+```{r}
 min(opt4_at$area_ha)
 min(opt5_at$area_ha)
 min(opt6_at$area_ha)
 ```
 
-```{r}
+```{r eval=FALSE, include=FALSE}
 max(opt1_at$area_ha)
 max(opt2_at$area_ha)
 max(opt3_at$area_ha)
+```
+
+```{r}
 max(opt4_at$area_ha)
 max(opt5_at$area_ha)
 max(opt6_at$area_ha)
@@ -213,15 +249,29 @@ max(opt6_at$area_ha)
 
 
 # Remove polygons less than 400 ha
-```{r}
+```{r eval=FALSE, include=FALSE}
 opt1_ha = filter(opt1_at, as.numeric(opt1_at$area_ha) >= 400)
 opt2_ha = filter(opt2_at, as.numeric(opt2_at$area_ha) >= 400)
 opt3_ha = filter(opt3_at, as.numeric(opt3_at$area_ha) >= 400)
+```
+
+```{r}
 opt4_ha = filter(opt4_at, as.numeric(opt4_at$area_ha) >= 400)
 opt5_ha = filter(opt5_at, as.numeric(opt5_at$area_ha) >= 400)
 opt6_ha = filter(opt6_at, as.numeric(opt6_at$area_ha) >= 400)
 ```
 
+```{r}
+opt4_ha
+```
+
+```{r}
+opt5_ha
+```
+
+```{r}
+opt6_ha
+```
 
 # Write to shapefile
 
@@ -229,6 +279,9 @@ opt6_ha = filter(opt6_at, as.numeric(opt6_at$area_ha) >= 400)
 st_write(opt1_ha, "../outputs/clean-shapefile/opt1.shp", driver="ESRI Shapefile") 
 st_write(opt2_ha, "../outputs/clean-shapefile/opt2.shp", driver="ESRI Shapefile") 
 st_write(opt3_ha, "../outputs/clean-shapefile/opt3.shp", driver="ESRI Shapefile") 
+```
+
+```{r eval=FALSE, include=FALSE}
 st_write(opt4_ha, "../outputs/clean-shapefile/opt4.shp", driver="ESRI Shapefile") 
 st_write(opt5_ha, "../outputs/clean-shapefile/opt5.shp", driver="ESRI Shapefile") 
 st_write(opt6_ha, "../outputs/clean-shapefile/opt6.shp", driver="ESRI Shapefile") 
