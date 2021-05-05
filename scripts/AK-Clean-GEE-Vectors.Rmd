@@ -30,6 +30,9 @@ library(rgeos) # GIS Geometry
 library(foreign) # deals with dbf files
 library(dplyr)
 library(spatialEco)
+library(rmapshaper)
+library(units)
+library(smoothr)
 ```
 
 # Projection
@@ -75,7 +78,7 @@ rdnbr_nh = remove.holes(rdnbr_buff)
 # Apply negative buffer
 ```{r}
 dnbr_nbuf = gBuffer(dnbr_nh, width = -1000, capStyle="ROUND", joinStyle="ROUND")
-rdnbr_nbuf = gBuffer(rdnb_nh, width = -1000, capStyle="ROUND", joinStyle="ROUND")
+rdnbr_nbuf = gBuffer(rdnbr_nh, width = -1000, capStyle="ROUND", joinStyle="ROUND")
 ```
 
 # Convert from sp to sf
@@ -99,6 +102,23 @@ dnbr_cast
 rdnbr_cast
 ```
 
+# Apply smooth function
+
+See [Smooth and Tidy Spatial Features](https://cran.r-project.org/web/packages/smoothr/vignettes/smoothr.html)
+
+```{r}
+dnbr_smooth <- smooth(dnbr_cast, method = "ksmooth", smoothness = 2)
+rdnbr_smooth <- smooth(rdnbr_cast, method = "ksmooth", smoothness = 2)
+```
+
+# Simplify
+
+Simplify with [mapshaper](https://cran.r-project.org/web/packages/rmapshaper/vignettes/rmapshaper.html).
+
+```{r}
+dnbr_simp = ms_simplify(dnbr_smooth)
+rdnbr_simp = ms_simplify(rdnbr_smooth)
+```
 # Create attributes
 - ID based on row number
 - area in meters squared, area_m
@@ -106,9 +126,9 @@ rdnbr_cast
 - Year of the burn, fire_yr
 
 ```{r}
-dnbr_at = dnbr_cast %>% dplyr::mutate(ID_obj = row_number()) %>% dplyr::mutate(area_m = round(st_area(dnbr_cast),1)) %>% dplyr::mutate(area_ha = round(area_m*0.0001, 1)) %>% dplyr::mutate(fire_yr = 2004) %>% dplyr::mutate(index = "dnbr") 
+dnbr_at = dnbr_simp %>% dplyr::mutate(ID_obj = row_number()) %>% dplyr::mutate(area_m = round(st_area(dnbr_simp),1)) %>% dplyr::mutate(area_ha = round(area_m*0.0001, 1)) %>% dplyr::mutate(fire_yr = 2004) %>% dplyr::mutate(index = "dnbr") 
 
-rdnbr_at = rdnbr_cast %>% dplyr::mutate(ID_obj = row_number()) %>% dplyr::mutate(area_m = round(st_area(rdnbr_cast),1)) %>% dplyr::mutate(area_ha = round(area_m*0.0001, 1)) %>% dplyr::mutate(fire_yr = 2004) %>% dplyr::mutate(index = "rdnbr") 
+rdnbr_at = rdnbr_simp %>% dplyr::mutate(ID_obj = row_number()) %>% dplyr::mutate(area_m = round(st_area(rdnbr_simp),1)) %>% dplyr::mutate(area_ha = round(area_m*0.0001, 1)) %>% dplyr::mutate(fire_yr = 2004) %>% dplyr::mutate(index = "rdnbr") 
 ```
 
 
@@ -142,11 +162,13 @@ summary(dnbr_ha)
 summary(rdnbr_ha)
 ```
 
+
+
 # Write to shapefile
 
 ```{r eval=FALSE, include=FALSE}
-st_write(dnbr_ha, "../outputs/clean-shapefile/AK_EAdnbrFiresHa400_2004.shp", driver="ESRI Shapefile") 
-st_write(rdnbr_ha, "../outputs/clean-shapefile/AK_EArdnbrFiresHa400_2004.shp", driver="ESRI Shapefile")  
+st_write(dnbr_ha, "../outputs/clean-shapefile/dnbrEASimpFires2004.shp", driver="ESRI Shapefile") 
+st_write(rdnbr_ha, "../outputs/clean-shapefile/rdnbrEASimpFires2004.shp", driver="ESRI Shapefile")  
 ```
 
 
