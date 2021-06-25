@@ -4,6 +4,7 @@
 
 Test fire perimeter protocols on Alaska (AK) 2004 fire season to compare with existing fire perimeter dataset.
 
+Data from [MTBS](https://www.mtbs.gov/direct-download)
 
 ### Processing
 
